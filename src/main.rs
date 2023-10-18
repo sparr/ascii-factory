@@ -19,6 +19,9 @@ struct Position {
     y: i32,
 }
 
+#[derive(Component)]
+struct LeftMover;
+
 // Entities with Renderable can be drawn to the screen
 #[derive(Component)]
 struct Renderable {
@@ -39,10 +42,10 @@ fn add_player(mut commands: Commands) {
 }
 
 fn add_npcs(mut commands: Commands) {
-    for i in 0..11 {
+    for i in 0..8 {
         commands.spawn((
             Position {
-                x: i * 7 + 5,
+                x: i * 10 + 5,
                 y: 25,
             },
             Renderable {
@@ -50,6 +53,7 @@ fn add_npcs(mut commands: Commands) {
                 fg: RGB::named(terminal::RED),
                 bg: RGB::named(terminal::BLACK),
             },
+            LeftMover,
         ));
     }
 }
@@ -60,11 +64,21 @@ fn draw_things(mut context: ResMut<Context>, query: Query<(&Position, &Renderabl
     }
 }
 
+fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
+    for mut p in query.iter_mut() {
+        p.x -= 1;
+        if p.x < 0 {
+            p.x = 79;
+        }
+    }
+}
+
 struct State {
     world: World, // the ECS world containing all of our entities, components, systems, schedules, resources, etc
 }
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
+        ctx.cls();
         // reference lifetime problems arise if trying to put a reference to ctx into Global.context
         // workaround is to clone from ctx into Global.context, tick, then clone back
         // there's hopefully a better way to do this
@@ -94,6 +108,7 @@ fn main() -> terminal::BError {
     gs.world.insert_resource(Context(context.clone()));
 
     let mut tick_schedule = Schedule::default();
+    tick_schedule.add_systems(move_left);
     tick_schedule.add_systems(draw_things);
     gs.world.add_schedule(tick_schedule, TickSchedule);
 
