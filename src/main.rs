@@ -12,6 +12,10 @@ use terminal::{FontCharType, GameState, RGB};
 #[derive(Resource)]
 struct Context(BTerm);
 
+// There should be just one player, for now
+#[derive(Component, Debug)]
+struct Player;
+
 // Entities with Position have an x and y coordinate in the world
 #[derive(Component)]
 struct Position {
@@ -32,6 +36,7 @@ struct Renderable {
 
 fn add_player(mut commands: Commands) {
     commands.spawn((
+        Player,
         Position { x: 40, y: 30 },
         Renderable {
             glyph: terminal::to_cp437('@'),
