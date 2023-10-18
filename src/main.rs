@@ -65,6 +65,7 @@ fn add_npcs(mut commands: Commands) {
 }
 
 fn draw_things(mut context: ResMut<Context>, query: Query<(&Position, &Renderable)>) {
+    context.0.cls();
     for (p, r) in &query {
         context.0.set(p.x, p.y, r.fg, r.bg, r.glyph);
     }
@@ -79,13 +80,34 @@ fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     }
 }
 
+// Handle input that affects the player's position
+fn player_input_move(context: ResMut<Context>, mut query: Query<&mut Position, With<Player>>) {
+    // Player movement
+    let mut dx = 0;
+    let mut dy = 0;
+    match context.0.key {
+        None => {} // Nothing happened
+        Some(key) => match key {
+            VirtualKeyCode::Left => dx -= 1,
+            VirtualKeyCode::Right => dx += 1,
+            VirtualKeyCode::Up => dy -= 1,
+            VirtualKeyCode::Down => dy += 1,
+            _ => {}
+        },
+    }
+
+    for mut p in query.iter_mut() {
+        p.x += dx;
+        p.y += dy;
+    }
+}
+
 // bracketlib's main loop expects a GameState with a tick function to call each frame/tick/update
 struct State {
     world: World, // the ECS world containing all of our entities, components, systems, schedules, resources, etc
 }
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
-        ctx.cls();
         // Reference lifetime problems arise if trying to put a reference to ctx into Global.context
         // Workaround is to clone from ctx into Global.context, tick, then clone back.
         // ctx is stale between the clones here, and the Context is stale outside of this function,
@@ -119,6 +141,7 @@ fn main() -> terminal::BError {
     gs.world.insert_resource(Context(context.clone()));
 
     let mut tick_schedule = Schedule::default();
+    tick_schedule.add_systems(player_input_move);
     tick_schedule.add_systems(move_left);
     tick_schedule.add_systems(draw_things);
     gs.world.add_schedule(tick_schedule, TickSchedule);
