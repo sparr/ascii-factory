@@ -103,6 +103,8 @@ struct TickSchedule;
 fn main() -> terminal::BError {
     let context = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
+        .with_vsync(false)
+        .with_fps_cap(9999.0)
         .build()?;
 
     let mut gs = State {
