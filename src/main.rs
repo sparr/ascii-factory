@@ -74,9 +74,6 @@ fn draw_things(mut context: ResMut<Context>, query: Query<(&Position, &Renderabl
 fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     for mut p in query.iter_mut() {
         p.x -= 1;
-        if p.x < 0 {
-            p.x = 79;
-        }
     }
 }
 
@@ -99,6 +96,23 @@ fn player_input_move(context: ResMut<Context>, mut query: Query<&mut Position, W
     for mut p in query.iter_mut() {
         p.x += dx;
         p.y += dy;
+    }
+}
+
+fn wrap_position(mut query: Query<&mut Position>) {
+    for mut p in query.iter_mut() {
+        if p.x < 0 {
+            p.x += 80
+        }
+        if p.x > 79 {
+            p.x -= 80
+        }
+        if p.y < 0 {
+            p.y += 50
+        }
+        if p.y > 49 {
+            p.y -= 50
+        }
     }
 }
 
@@ -143,6 +157,7 @@ fn main() -> terminal::BError {
     let mut tick_schedule = Schedule::default();
     tick_schedule.add_systems(player_input_move);
     tick_schedule.add_systems(move_left);
+    tick_schedule.add_systems(wrap_position);
     tick_schedule.add_systems(draw_things);
     gs.world.add_schedule(tick_schedule, TickSchedule);
 
