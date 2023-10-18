@@ -23,6 +23,7 @@ struct Position {
     y: i32,
 }
 
+// TODO codify that this component should only exist on entities with Position component
 #[derive(Component)]
 struct LeftMover;
 
@@ -78,15 +79,18 @@ fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     }
 }
 
+// bracketlib's main loop expects a GameState with a tick function to call each frame/tick/update
 struct State {
     world: World, // the ECS world containing all of our entities, components, systems, schedules, resources, etc
 }
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
-        // reference lifetime problems arise if trying to put a reference to ctx into Global.context
-        // workaround is to clone from ctx into Global.context, tick, then clone back
-        // there's hopefully a better way to do this
+        // Reference lifetime problems arise if trying to put a reference to ctx into Global.context
+        // Workaround is to clone from ctx into Global.context, tick, then clone back.
+        // ctx is stale between the clones here, and the Context is stale outside of this function,
+        // but neither is used while stale so that's ok (for now).
+        // TODO: Find a better way to handle this.
         self.world.resource_mut::<Context>().0.clone_from(ctx);
         self.world.run_schedule(TickSchedule);
         ctx.clone_from(&self.world.resource_mut::<Context>().0)
