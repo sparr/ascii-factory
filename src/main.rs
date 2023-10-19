@@ -2,7 +2,7 @@
 // https://bevyengine.org/learn/book/introduction/
 // https://bfnightly.bracketproductions.com/rustbook/
 
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use bracket_lib::prelude::*;
 use bracket_lib::terminal;
 use terminal::{FontCharType, GameState, RGB};
@@ -118,48 +118,41 @@ fn wrap_position(mut query: Query<&mut Position>) {
 
 // bracketlib's main loop expects a GameState with a tick function to call each frame/tick/update
 struct State {
-    world: World, // the ECS world containing all of our entities, components, systems, schedules, resources, etc
+    app: App,
 }
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
-        // Reference lifetime problems arise if trying to put a reference to ctx into Global.context
-        // Workaround is to clone from ctx into Global.context, tick, then clone back.
-        // ctx is stale between the clones here, and the Context is stale outside of this function,
+        // Reference lifetime problems arise if trying to put a reference to ctx into Context
+        // Workaround is to clone from ctx into Context, tick, then clone back.
+        // ctx is stale between the clones here, and Context is stale outside of this function,
         // but neither is used while stale so that's ok (for now).
         // TODO: Find a better way to handle this.
-        self.world.resource_mut::<Context>().0.clone_from(ctx);
-        self.world.run_schedule(TickSchedule);
-        ctx.clone_from(&self.world.resource_mut::<Context>().0)
+        self.app.world.resource_mut::<Context>().0.clone_from(ctx);
+        self.app.update();
+        ctx.clone_from(&self.app.world.resource_mut::<Context>().0)
     }
 }
 
-#[derive(bevy_ecs::schedule::ScheduleLabel, Hash, Debug, PartialEq, Eq, Clone)]
-struct TickSchedule;
-
-fn main() -> terminal::BError {
+fn bracketlib_runner(mut app: App) {
     let context = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
         .with_vsync(false)
         .with_fps_cap(9999.0)
-        .build()?;
+        .build()
+        .unwrap();
+    app.insert_resource(Context(context.clone()));
+    let gs = State { app };
+    let _ = main_loop(context, gs);
+}
 
-    let mut gs = State {
-        world: World::new(),
-    };
-
-    let mut init_schedule = Schedule::default();
-    init_schedule.add_systems(add_player);
-    init_schedule.add_systems(add_npcs);
-    init_schedule.run(&mut gs.world);
-
-    gs.world.insert_resource(Context(context.clone()));
-
-    let mut tick_schedule = Schedule::default();
-    tick_schedule.add_systems(player_input_move);
-    tick_schedule.add_systems(move_left);
-    tick_schedule.add_systems(wrap_position);
-    tick_schedule.add_systems(draw_things);
-    gs.world.add_schedule(tick_schedule, TickSchedule);
-
-    main_loop(context, gs)
+fn main() {
+    App::new()
+        .add_plugins(MinimalPlugins)
+        .add_systems(Startup, (add_player, add_npcs))
+        .add_systems(
+            Update,
+            (player_input_move, move_left, wrap_position, draw_things),
+        )
+        .set_runner(bracketlib_runner)
+        .run();
 }

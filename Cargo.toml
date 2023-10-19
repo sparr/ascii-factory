@@ -5,8 +5,7 @@ edition = "2021"
 
 [dependencies]
 bracket-lib = "~0.8"
-bevy_ecs = "~0.11"
-bevy_utils = "~0.11" # required to use ScheduleLabel until https://github.com/bevyengine/bevy/pull/7762 lands to fix https://github.com/bevyengine/bevy/issues/9335
+bevy = "~0.11"
 
 # https://bevyengine.org/learn/book/getting-started/setup/#compile-with-performance-optimizations
 # Enable a small amount of optimization in debug mode
