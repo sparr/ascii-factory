@@ -238,6 +238,7 @@ fn bracketlib_runner(mut app: App) {
         // uncomment these for benchmarking, to avoid idle time between frames
         // .with_vsync(false)
         // .with_fps_cap(9999.0)
+        .with_fullscreen(true)
         .build()
         .unwrap();
     app.insert_resource(BracketLib {
