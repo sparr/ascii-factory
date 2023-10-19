@@ -197,7 +197,7 @@ fn draw_map(mut bl: ResMut<BracketLib>, map: Res<Map>) {
                     x,
                     y,
                     RGB::named(terminal::BLUE),
-                    RGB::named(terminal::BLACK),
+                    RGB::named(terminal::BLUE),
                     to_cp437('~'),
                 );
             }
