@@ -98,6 +98,7 @@ fn player_input_move(
             VirtualKeyCode::Right => dx += 1,
             VirtualKeyCode::Up => dy -= 1,
             VirtualKeyCode::Down => dy += 1,
+            VirtualKeyCode::Q => bl.bterm.quit(),
             _ => {}
         },
     }
