@@ -10,7 +10,9 @@ use terminal::{FontCharType, GameState, RGB};
 // https://bevyengine.org/learn/book/getting-started/resources/ suggests using a Resource
 // to allow the ECS access to globally unique data such as a renderer
 #[derive(Resource)]
-struct Context(BTerm);
+struct BracketLib {
+    bterm: BTerm,
+}
 
 // There should be just one player, for now
 #[derive(Component, Debug)]
@@ -64,10 +66,10 @@ fn add_npcs(mut commands: Commands) {
     }
 }
 
-fn draw_things(mut context: ResMut<Context>, query: Query<(&Position, &Renderable)>) {
-    context.0.cls();
+fn draw_things(mut bl: ResMut<BracketLib>, query: Query<(&Position, &Renderable)>) {
+    bl.bterm.cls();
     for (p, r) in &query {
-        context.0.set(p.x, p.y, r.fg, r.bg, r.glyph);
+        bl.bterm.set(p.x, p.y, r.fg, r.bg, r.glyph);
     }
 }
 
@@ -78,11 +80,14 @@ fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
 }
 
 // Handle input that affects the player's position
-fn player_input_move(context: ResMut<Context>, mut query: Query<&mut Position, With<Player>>) {
+fn player_input_move(
+    mut bl: ResMut<BracketLib>,
+    mut query: Query<&mut Position, With<Player>>,
+) {
     // Player movement
     let mut dx = 0;
     let mut dy = 0;
-    match context.0.key {
+    match bl.bterm.key {
         None => {} // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::Left => dx -= 1,
@@ -121,29 +126,35 @@ struct State {
     app: App,
 }
 impl GameState for State {
-    fn tick(&mut self, ctx: &mut BTerm) {
+    fn tick(&mut self, bterm: &mut BTerm) {
         // Reference lifetime problems arise if trying to put a reference to ctx into Context
         // Workaround is to clone from ctx into Context, tick, then clone back.
         // ctx is stale between the clones here, and Context is stale outside of this function,
         // but neither is used while stale so that's ok (for now).
         // TODO: Find a better way to handle this.
-        self.app.world.resource_mut::<Context>().0.clone_from(ctx);
+        self.app
+            .world
+            .resource_mut::<BracketLib>()
+            .bterm
+            .clone_from(bterm);
         self.app.update();
-        ctx.clone_from(&self.app.world.resource_mut::<Context>().0)
+        bterm.clone_from(&self.app.world.resource_mut::<BracketLib>().bterm)
     }
 }
 
 fn bracketlib_runner(mut app: App) {
-    let context = BTermBuilder::simple80x50()
+    let bterm = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
         // uncomment these for benchmarking, to avoid idle time between frames
         // .with_vsync(false)
         // .with_fps_cap(9999.0)
         .build()
         .unwrap();
-    app.insert_resource(Context(context.clone()));
+    app.insert_resource(BracketLib {
+        bterm: bterm.clone(),
+    });
     let gs = State { app };
-    let _ = main_loop(context, gs);
+    let _ = main_loop(bterm, gs);
 }
 
 fn main() {
