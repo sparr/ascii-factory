@@ -78,7 +78,10 @@ fn draw_things(mut bl: ResMut<BracketLib>, query: Query<(&Position, &Renderable)
 
 fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     for mut p in query.iter_mut() {
-        p.x -= 1;
+        let mut rng = RandomNumberGenerator::new();
+        if rng.roll_dice(1, 10) == 1 {
+            p.x -= 1;
+        }
     }
 }
 
