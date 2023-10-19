@@ -136,8 +136,9 @@ impl GameState for State {
 fn bracketlib_runner(mut app: App) {
     let context = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
-        .with_vsync(false)
-        .with_fps_cap(9999.0)
+        // uncomment these for benchmarking, to avoid idle time between frames
+        // .with_vsync(false)
+        // .with_fps_cap(9999.0)
         .build()
         .unwrap();
     app.insert_resource(Context(context.clone()));
