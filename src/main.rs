@@ -66,8 +66,11 @@ fn add_npcs(mut commands: Commands) {
     }
 }
 
-fn draw_things(mut bl: ResMut<BracketLib>, query: Query<(&Position, &Renderable)>) {
+fn cls(mut bl: ResMut<BracketLib>) {
     bl.bterm.cls();
+}
+
+fn draw_things(mut bl: ResMut<BracketLib>, query: Query<(&Position, &Renderable)>) {
     for (p, r) in &query {
         bl.bterm.set(p.x, p.y, r.fg, r.bg, r.glyph);
     }
@@ -82,6 +85,7 @@ fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
 // Handle input that affects the player's position
 fn player_input_move(
     mut bl: ResMut<BracketLib>,
+    map: Res<Map>,
     mut query: Query<&mut Position, With<Player>>,
 ) {
     // Player movement
@@ -99,8 +103,10 @@ fn player_input_move(
     }
 
     for mut p in query.iter_mut() {
-        p.x += dx;
-        p.y += dy;
+        if map.terrain[xy_idx(p.x + dx, p.y + dy)] != TerrainType::Water {
+            p.x += dx;
+            p.y += dy;
+        }
     }
 }
 
@@ -120,6 +126,89 @@ fn wrap_position(mut query: Query<&mut Position>) {
         }
     }
 }
+
+// map stuff
+
+#[derive(Resource)]
+struct Map {
+    terrain: Vec<TerrainType>,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+enum TerrainType {
+    Land,
+    Water,
+}
+
+pub fn xy_idx(x: i32, y: i32) -> usize {
+    (y as usize * 80) + x as usize
+}
+
+fn new_map() -> Vec<TerrainType> {
+    let mut map = vec![TerrainType::Land; 80 * 50];
+
+    // Make the boundaries water
+    for x in 0..80 {
+        map[xy_idx(x, 0)] = TerrainType::Water;
+        map[xy_idx(x, 49)] = TerrainType::Water;
+    }
+    for y in 0..50 {
+        map[xy_idx(0, y)] = TerrainType::Water;
+        map[xy_idx(79, y)] = TerrainType::Water;
+    }
+
+    // Now we'll randomly splat a bunch of water. It won't be pretty, but it's a decent illustration.
+    // First, obtain the thread-local RNG:
+    let mut rng = RandomNumberGenerator::new();
+
+    for _ in 0..400 {
+        let x = rng.roll_dice(1, 79);
+        let y = rng.roll_dice(1, 49);
+        let idx = xy_idx(x, y);
+        if idx != xy_idx(40, 30) {
+            map[idx] = TerrainType::Water;
+        }
+    }
+
+    map
+}
+
+fn draw_map(mut bl: ResMut<BracketLib>, map: Res<Map>) {
+    let mut y = 0;
+    let mut x = 0;
+    for terrain in map.terrain.iter() {
+        // Render a tile depending upon the tile type
+        match terrain {
+            TerrainType::Land => {
+                bl.bterm.set(
+                    x,
+                    y,
+                    RGB::named(terminal::GRAY),
+                    RGB::named(terminal::BLACK),
+                    to_cp437('.'),
+                );
+            }
+            TerrainType::Water => {
+                bl.bterm.set(
+                    x,
+                    y,
+                    RGB::named(terminal::BLUE),
+                    RGB::named(terminal::BLACK),
+                    to_cp437('~'),
+                );
+            }
+        }
+
+        // Move the coordinates
+        x += 1;
+        if x > 79 {
+            x = 0;
+            y += 1;
+        }
+    }
+}
+
+// game loop stuff
 
 // bracketlib's main loop expects a GameState with a tick function to call each frame/tick/update
 struct State {
@@ -153,6 +242,7 @@ fn bracketlib_runner(mut app: App) {
     app.insert_resource(BracketLib {
         bterm: bterm.clone(),
     });
+    app.insert_resource(Map { terrain: new_map() });
     let gs = State { app };
     let _ = main_loop(bterm, gs);
 }
@@ -163,7 +253,14 @@ fn main() {
         .add_systems(Startup, (add_player, add_npcs))
         .add_systems(
             Update,
-            (player_input_move, move_left, wrap_position, draw_things),
+            (
+                player_input_move.before(wrap_position),
+                move_left.before(wrap_position),
+                wrap_position,
+                cls.before(draw_map),
+                draw_map.before(draw_things),
+                draw_things,
+            ),
         )
         .set_runner(bracketlib_runner)
         .run();
