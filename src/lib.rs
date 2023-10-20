@@ -10,7 +10,7 @@ use bevy_bracket::{BevyBracket, BracketGameState};
 mod components;
 
 mod player;
-use player::{add_npcs, add_player, move_left, player_input_move, wrap_position};
+use player::{add_cursor, draw_cursor, handle_input, wrap_position};
 
 mod render;
 use render::{cls, draw_things};
@@ -37,16 +37,16 @@ fn bracketlib_runner(mut app: App) {
 pub fn run() {
     App::new()
         .add_plugins(MinimalPlugins)
-        .add_systems(Startup, (add_player, add_npcs))
+        .add_systems(Startup, add_cursor)
         .add_systems(
             Update,
             (
-                player_input_move.before(wrap_position),
-                move_left.before(wrap_position),
+                handle_input.before(wrap_position),
                 wrap_position,
                 cls.before(draw_map),
                 draw_map.before(draw_things),
-                draw_things,
+                draw_things.before(draw_cursor),
+                draw_cursor,
             ),
         )
         .set_runner(bracketlib_runner)

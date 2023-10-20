@@ -3,57 +3,29 @@ use bracket_lib::prelude::*;
 use bracket_lib::terminal;
 
 use crate::bevy_bracket::BevyBracket;
-use crate::components::{LeftMover, Player, Position, Renderable};
-use crate::map::{xy_idx, Map, TerrainType};
+use crate::components::{Cursor, Position};
 
 /// Create the Player entity with other necessary components
-pub fn add_player(mut commands: Commands) {
-    commands.spawn((
-        Player,
-        Position { x: 40, y: 30 },
-        Renderable {
-            glyph: terminal::to_cp437('@'),
-            fg: RGB::named(terminal::YELLOW),
-            bg: RGB::named(terminal::BLACK),
-        },
-    ));
+pub fn add_cursor(mut commands: Commands) {
+    commands.spawn((Cursor, Position { x: 40, y: 30 }));
 }
 
-/// Create multiple non-Player entities with other necessary components
-pub fn add_npcs(mut commands: Commands) {
-    for i in 0..8 {
-        commands.spawn((
-            Position {
-                x: i * 10 + 5,
-                y: 25,
-            },
-            Renderable {
-                glyph: terminal::to_cp437('☺'),
-                fg: RGB::named(terminal::RED),
-                bg: RGB::named(terminal::BLACK),
-            },
-            LeftMover,
-        ));
-    }
-}
-
-/// Moves LeftMover entities to the left, randomly pausing
-pub fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
-    for mut p in query.iter_mut() {
-        let mut rng = RandomNumberGenerator::new();
-        if rng.roll_dice(1, 10) == 1 {
-            p.x -= 1;
-        }
-    }
-}
-
-/// Handle input that affects the player's position
-pub fn player_input_move(
+pub fn draw_cursor(
     mut bl: ResMut<BevyBracket>,
-    map: Res<Map>,
-    mut query: Query<&mut Position, With<Player>>,
+    cursor_position: Query<&mut Position, With<Cursor>>,
 ) {
-    // Player movement
+    for p in &cursor_position {
+        bl.bterm.set_bg(p.x, 0, RGB::named(terminal::YELLOW));
+        bl.bterm.set_bg(p.x, 49, RGB::named(terminal::YELLOW));
+        bl.bterm.set_bg(0, p.y, RGB::named(terminal::YELLOW));
+        bl.bterm.set_bg(79, p.y, RGB::named(terminal::YELLOW));
+        bl.bterm.set_bg(p.x, p.y, RGB::named(terminal::YELLOW));
+    }
+}
+
+/// Handle input
+pub fn handle_input(mut bl: ResMut<BevyBracket>, mut query: Query<&mut Position, With<Cursor>>) {
+    // Cursor movement
     let mut dx = 0;
     let mut dy = 0;
     match bl.bterm.key {
@@ -69,10 +41,8 @@ pub fn player_input_move(
     }
 
     for mut p in query.iter_mut() {
-        if map.terrain[xy_idx(p.x + dx, p.y + dy)] != TerrainType::Water {
-            p.x += dx;
-            p.y += dy;
-        }
+        p.x += dx;
+        p.y += dy;
     }
 }
 

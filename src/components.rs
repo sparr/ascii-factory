@@ -3,7 +3,7 @@ use bracket_lib::prelude::*;
 
 /// The sole user-controllable entity
 #[derive(Component, Debug)]
-pub struct Player;
+pub struct Cursor;
 
 /// x and y coordinates of an entity on the game map
 #[derive(Component)]
