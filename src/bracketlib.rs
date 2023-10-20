@@ -14,9 +14,9 @@ pub struct BracketLibGameState {
 }
 impl GameState for BracketLibGameState {
     fn tick(&mut self, bterm: &mut BTerm) {
-        // Reference lifetime problems arise if trying to put a reference to ctx into Context
-        // Workaround is to clone from ctx into Context, tick, then clone back.
-        // ctx is stale between the clones here, and Context is stale outside of this function,
+        // Reference lifetime problems arise if trying to put a reference to ctx into BracketLib Resource
+        // Workaround is to clone from bterm into the resource, tick, then clone back.
+        // bterm is stale between the clones here, and the resource is stale outside of this function,
         // but neither is used while stale so that's ok (for now).
         // TODO: Find a better way to handle this.
         self.app
