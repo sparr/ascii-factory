@@ -2,19 +2,18 @@ use bevy::prelude::*;
 use bracket_lib::prelude::*;
 
 mod map;
-use map::*;
+use map::{draw_map, new_map, Map};
 
-mod bracketlib;
-use bracketlib::*;
+mod bevy_bracket;
+use bevy_bracket::{BevyBracket, BracketGameState};
 
 mod components;
-use components::*;
 
 mod player;
-use player::*;
+use player::{add_npcs, add_player, move_left, player_input_move, wrap_position};
 
 mod render;
-use render::*;
+use render::{cls, draw_things};
 
 /// Used by bevy App.set_runner().run() to allow bracket-lib to control the game loop
 fn bracketlib_runner(mut app: App) {
@@ -26,11 +25,11 @@ fn bracketlib_runner(mut app: App) {
         .with_fullscreen(true)
         .build()
         .unwrap();
-    app.insert_resource(BracketLib {
+    app.insert_resource(BevyBracket {
         bterm: bterm.clone(),
     });
     app.insert_resource(Map { terrain: new_map() });
-    let gs = BracketLibGameState { app };
+    let gs = BracketGameState { app };
     let _ = main_loop(bterm, gs);
 }
 

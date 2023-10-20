@@ -1,7 +1,10 @@
-use crate::{xy_idx, BracketLib, LeftMover, Map, Player, Position, Renderable, TerrainType};
 use bevy::prelude::*;
 use bracket_lib::prelude::*;
 use bracket_lib::terminal;
+
+use crate::bevy_bracket::BevyBracket;
+use crate::components::{LeftMover, Player, Position, Renderable};
+use crate::map::{xy_idx, Map, TerrainType};
 
 /// Create the Player entity with other necessary components
 pub fn add_player(mut commands: Commands) {
@@ -46,7 +49,7 @@ pub fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
 
 /// Handle input that affects the player's position
 pub fn player_input_move(
-    mut bl: ResMut<BracketLib>,
+    mut bl: ResMut<BevyBracket>,
     map: Res<Map>,
     mut query: Query<&mut Position, With<Player>>,
 ) {

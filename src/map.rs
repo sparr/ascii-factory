@@ -2,7 +2,7 @@ use bevy::prelude::{Res, ResMut, Resource};
 use bracket_lib::prelude::{to_cp437, RandomNumberGenerator, RGB};
 use bracket_lib::terminal;
 
-use crate::BracketLib;
+use crate::BevyBracket;
 
 /// Information about the game world map
 #[derive(Resource)]
@@ -53,7 +53,7 @@ pub fn new_map() -> Vec<TerrainType> {
 }
 
 /// Draw the map to the screen
-pub fn draw_map(mut bl: ResMut<BracketLib>, map: Res<Map>) {
+pub fn draw_map(mut bl: ResMut<BevyBracket>, map: Res<Map>) {
     let mut y = 0;
     let mut x = 0;
     for terrain in map.terrain.iter() {
