@@ -16,6 +16,7 @@ use player::*;
 mod render;
 use render::*;
 
+/// Used by bevy App.set_runner().run() to allow bracket-lib to control the game loop
 fn bracketlib_runner(mut app: App) {
     let bterm = BTermBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
@@ -33,6 +34,7 @@ fn bracketlib_runner(mut app: App) {
     let _ = main_loop(bterm, gs);
 }
 
+/// Create the bevy App, set up plugins and systems, run the custom App runner
 pub fn run() {
     App::new()
         .add_plugins(MinimalPlugins)

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bracket_lib::prelude::*;
 use bracket_lib::terminal;
 
+/// Create the Player entity with other necessary components
 pub fn add_player(mut commands: Commands) {
     commands.spawn((
         Player,
@@ -15,6 +16,7 @@ pub fn add_player(mut commands: Commands) {
     ));
 }
 
+/// Create multiple non-Player entities with other necessary components
 pub fn add_npcs(mut commands: Commands) {
     for i in 0..8 {
         commands.spawn((
@@ -32,6 +34,7 @@ pub fn add_npcs(mut commands: Commands) {
     }
 }
 
+/// Moves LeftMover entities to the left, randomly pausing
 pub fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     for mut p in query.iter_mut() {
         let mut rng = RandomNumberGenerator::new();
@@ -41,7 +44,7 @@ pub fn move_left(mut query: Query<&mut Position, With<LeftMover>>) {
     }
 }
 
-// Handle input that affects the player's position
+/// Handle input that affects the player's position
 pub fn player_input_move(
     mut bl: ResMut<BracketLib>,
     map: Res<Map>,
@@ -70,6 +73,7 @@ pub fn player_input_move(
     }
 }
 
+/// Update the position of any entity that has left the map, wrapping around to the other side
 pub fn wrap_position(mut query: Query<&mut Position>) {
     for mut p in query.iter_mut() {
         if p.x < 0 {

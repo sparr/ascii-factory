@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bracket_lib::prelude::*;
 
+/// Resource allowing bevy ecs to interact with bracket-lib functionality
 // https://bevyengine.org/learn/book/getting-started/resources/ suggests using a Resource
 // to allow the ECS access to globally unique data such as a renderer
 #[derive(Resource)]
@@ -8,11 +9,13 @@ pub struct BracketLib {
     pub bterm: BTerm,
 }
 
-// bracketlib's main loop expects a GameState with a tick function to call each frame/tick/update
+/// Used by bracket-lib while running its game loop
 pub struct BracketLibGameState {
+    /// Makes bevy and bevy ecs functionality available to bracket-lib's main_loop and tick
     pub app: App,
 }
 impl GameState for BracketLibGameState {
+    /// Called once per frame by bracket-lib's main_loop
     fn tick(&mut self, bterm: &mut BTerm) {
         // Reference lifetime problems arise if trying to put a reference to ctx into BracketLib Resource
         // Workaround is to clone from bterm into the resource, tick, then clone back.

@@ -4,21 +4,25 @@ use bracket_lib::terminal;
 
 use crate::BracketLib;
 
+/// Information about the game world map
 #[derive(Resource)]
 pub struct Map {
     pub terrain: Vec<TerrainType>,
 }
 
+/// Types of terrain that can exist on the game world map
 #[derive(PartialEq, Copy, Clone)]
 pub enum TerrainType {
     Land,
     Water,
 }
 
+/// Convert 2d coordinates to the equivalent index in a 1d vector
 pub fn xy_idx(x: i32, y: i32) -> usize {
     (y as usize * 80) + x as usize
 }
 
+/// Create a map, mostly land with scattered water
 pub fn new_map() -> Vec<TerrainType> {
     let mut map = vec![TerrainType::Land; 80 * 50];
 
@@ -48,6 +52,7 @@ pub fn new_map() -> Vec<TerrainType> {
     map
 }
 
+/// Draw the map to the screen
 pub fn draw_map(mut bl: ResMut<BracketLib>, map: Res<Map>) {
     let mut y = 0;
     let mut x = 0;
