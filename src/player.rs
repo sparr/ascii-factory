@@ -31,10 +31,34 @@ pub fn handle_input(mut bl: ResMut<BevyBracket>, mut query: Query<&mut Position,
     match bl.bterm.key {
         None => {} // Nothing happened
         Some(key) => match key {
-            VirtualKeyCode::Left => dx -= 1,
-            VirtualKeyCode::Right => dx += 1,
-            VirtualKeyCode::Up => dy -= 1,
-            VirtualKeyCode::Down => dy += 1,
+            VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => dx -= 1,
+
+            VirtualKeyCode::Right | VirtualKeyCode::Numpad6 | VirtualKeyCode::L => dx += 1,
+
+            VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => dy -= 1,
+
+            VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => dy += 1,
+
+            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => {
+                dx -= 1;
+                dy += 1;
+            }
+
+            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => {
+                dx += 1;
+                dy += 1;
+            }
+
+            VirtualKeyCode::Numpad7 | VirtualKeyCode::Y => {
+                dx -= 1;
+                dy -= 1;
+            }
+
+            VirtualKeyCode::Numpad9 | VirtualKeyCode::U => {
+                dx += 1;
+                dy -= 1;
+            }
+
             VirtualKeyCode::Q => bl.bterm.quit(),
             _ => {}
         },
