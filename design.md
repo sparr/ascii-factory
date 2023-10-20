@@ -31,9 +31,7 @@ Are there hostile NPCs? factorio biters, satisfactory monsters of various sorts,
 * computer
   * see Computation
 * wires
-  * `\/X`
-  * carry digital signals
-  * connect to entities in diagonal directions
+  * see Computation
 * constructor
   * mindustry-style insertion, belts run directly into constructor, no inserter/grabber entity needed
   * i/o like a balancer, so a one-tile one-machine constructor can handle 1 2 3 ingredients and 3 2 1 output items
@@ -53,6 +51,24 @@ Are there hostile NPCs? factorio biters, satisfactory monsters of various sorts,
 * Signals are 16-bit signed integers
 * Default signal names look like `entity.verb[.item]`
   * pipe.contains.water=100
+* Wire entity
+  * `\/X`
+  * carry digital signals
+  * connect to entities in diagonal directions
+  * multiple colors, at least 2
+    * X allows:
+      * forking one color
+        *     A A
+               X
+              A A
+      * crossing two colors without connecting
+        *     A B
+               X
+              B A
+      * connecting multiple colors to one computer from the same direction
+        *     A B
+               X
+              C Computer
 * Computer entity
   * has 4 I/O variables configured by name and mapped to local registers
     * e.g. A=pipe.contains.water, B=conveyor.powered, ...
