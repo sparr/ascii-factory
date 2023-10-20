@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bracket_lib::prelude::*;
 
 mod map;
-use map::{draw_map, new_map, Map};
+use map::{draw_map, Map};
 
 mod bevy_bracket;
 use bevy_bracket::{BevyBracket, BracketGameState};
@@ -28,7 +28,7 @@ fn bracketlib_runner(mut app: App) {
     app.insert_resource(BevyBracket {
         bterm: bterm.clone(),
     });
-    app.insert_resource(Map { terrain: new_map() });
+    app.insert_resource(Map::new_map());
     let gs = BracketGameState { app };
     let _ = main_loop(bterm, gs);
 }

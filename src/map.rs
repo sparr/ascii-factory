@@ -4,12 +4,6 @@ use bracket_lib::terminal;
 
 use crate::BevyBracket;
 
-/// Information about the game world map
-#[derive(Resource)]
-pub struct Map {
-    pub terrain: Vec<TerrainType>,
-}
-
 /// Types of terrain that can exist on the game world map
 #[derive(PartialEq, Copy, Clone)]
 pub enum TerrainType {
@@ -17,39 +11,55 @@ pub enum TerrainType {
     Water,
 }
 
-/// Convert 2d coordinates to the equivalent index in a 1d vector
-pub fn xy_idx(x: i32, y: i32) -> usize {
-    (y as usize * 80) + x as usize
+/// Information about the game world map
+#[derive(Resource)]
+pub struct Map {
+    pub terrain: Vec<TerrainType>,
+    pub width: i32,
+    pub height: i32,
 }
 
-/// Create a map, mostly land with scattered water
-pub fn new_map() -> Vec<TerrainType> {
-    let mut map = vec![TerrainType::Land; 80 * 50];
-
-    // Make the boundaries water
-    for x in 0..80 {
-        map[xy_idx(x, 0)] = TerrainType::Water;
-        map[xy_idx(x, 49)] = TerrainType::Water;
-    }
-    for y in 0..50 {
-        map[xy_idx(0, y)] = TerrainType::Water;
-        map[xy_idx(79, y)] = TerrainType::Water;
+impl Map {
+    /// Convert 2d coordinates to the equivalent index in a 1d vector
+    pub fn xy_idx(&mut self, x: i32, y: i32) -> usize {
+        (y as usize * self.width as usize) + x as usize
     }
 
-    // Now we'll randomly splat a bunch of water. It won't be pretty, but it's a decent illustration.
-    // First, obtain the thread-local RNG:
-    let mut rng = RandomNumberGenerator::new();
+    pub fn set_terrain(&mut self, x: i32, y: i32, t: TerrainType) {
+        let idx = self.xy_idx(x, y);
+        self.terrain[idx] = t;
+    }
 
-    for _ in 0..400 {
-        let x = rng.roll_dice(1, 79);
-        let y = rng.roll_dice(1, 49);
-        let idx = xy_idx(x, y);
-        if idx != xy_idx(40, 30) {
-            map[idx] = TerrainType::Water;
+    /// Create a map, mostly land with scattered water
+    pub fn new_map() -> Map {
+        let mut map = Map {
+            terrain: vec![TerrainType::Land; 80 * 50],
+            width: 80,
+            height: 50,
+        };
+
+        // Make the boundaries water
+        for x in 0..80 {
+            map.set_terrain(x, 0, TerrainType::Water);
+            map.set_terrain(x, map.height - 1, TerrainType::Water);
         }
-    }
+        for y in 0..50 {
+            map.set_terrain(0, y, TerrainType::Water);
+            map.set_terrain(map.width - 1, y, TerrainType::Water);
+        }
 
-    map
+        // Now we'll randomly splat a bunch of water. It won't be pretty, but it's a decent illustration.
+        // First, obtain the thread-local RNG:
+        let mut rng = RandomNumberGenerator::new();
+
+        for _ in 0..400 {
+            let x = rng.roll_dice(1, 79);
+            let y = rng.roll_dice(1, 49);
+            map.set_terrain(x, y, TerrainType::Water);
+        }
+
+        map
+    }
 }
 
 /// Draw the map to the screen
