@@ -15,6 +15,9 @@ use player::{add_cursor, draw_cursor, handle_input, wrap_position};
 mod render;
 use render::{cls, draw_things};
 
+mod visibility;
+use visibility::update_visibility;
+
 /// Used by bevy App.set_runner().run() to allow bracket-lib to control the game loop
 fn bracketlib_runner(mut app: App) {
     let bterm = BTermBuilder::simple80x50()
@@ -44,6 +47,7 @@ pub fn run() {
                 handle_input.before(wrap_position),
                 wrap_position,
                 cls.before(draw_map),
+                update_visibility.before(draw_map),
                 draw_map.before(draw_things),
                 draw_things.before(draw_cursor),
                 draw_cursor,

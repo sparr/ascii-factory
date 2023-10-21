@@ -1,14 +1,20 @@
-use bevy::prelude::{Res, ResMut, Resource};
-use bracket_lib::prelude::{to_cp437, RandomNumberGenerator, RGB};
-use bracket_lib::terminal;
+use bevy::prelude::*;
+use bracket_lib::prelude::*;
+use bracket_lib::terminal::{self, Point};
 
+use crate::components::Cursor;
+use crate::visibility::Viewshed;
 use crate::BevyBracket;
 
 /// Types of terrain that can exist on the game world map
 #[derive(PartialEq, Copy, Clone)]
 pub enum TerrainType {
+    /// Build stuff here
     Land,
+    /// Can't build, can see across
     Water,
+    /// Blocks line of sight
+    Mountain,
 }
 
 /// Information about the game world map
@@ -19,15 +25,27 @@ pub struct Map {
     pub height: i32,
 }
 
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.terrain[idx] == TerrainType::Mountain
+    }
+}
+
 impl Map {
-    /// Convert 2d coordinates to the equivalent index in a 1d vector
-    pub fn xy_idx(&mut self, x: i32, y: i32) -> usize {
-        (y as usize * self.width as usize) + x as usize
+    pub fn set_terrain(&mut self, p: Point, t: TerrainType) {
+        let idx = self.point2d_to_index(p);
+        self.terrain[idx] = t;
     }
 
-    pub fn set_terrain(&mut self, x: i32, y: i32, t: TerrainType) {
-        let idx = self.xy_idx(x, y);
-        self.terrain[idx] = t;
+    pub fn get_terrain(&self, p: Point) -> TerrainType {
+        let idx = self.point2d_to_index(p);
+        self.terrain[idx]
     }
 
     /// Create a map, mostly land with scattered water
@@ -38,62 +56,87 @@ impl Map {
             height: 50,
         };
 
-        // Make the boundaries water
+        // Make the boundaries mountain
         for x in 0..80 {
-            map.set_terrain(x, 0, TerrainType::Water);
-            map.set_terrain(x, map.height - 1, TerrainType::Water);
+            map.set_terrain(Point { x, y: 0 }, TerrainType::Mountain);
+            map.set_terrain(
+                Point {
+                    x,
+                    y: map.height - 1,
+                },
+                TerrainType::Mountain,
+            );
         }
         for y in 0..50 {
-            map.set_terrain(0, y, TerrainType::Water);
-            map.set_terrain(map.width - 1, y, TerrainType::Water);
+            map.set_terrain(Point { x: 0, y }, TerrainType::Mountain);
+            map.set_terrain(
+                Point {
+                    x: map.width - 1,
+                    y,
+                },
+                TerrainType::Mountain,
+            );
         }
 
-        // Now we'll randomly splat a bunch of water. It won't be pretty, but it's a decent illustration.
+        // Now we'll randomly splat a bunch of water and mountains.
         // First, obtain the thread-local RNG:
         let mut rng = RandomNumberGenerator::new();
 
-        for _ in 0..400 {
-            let x = rng.roll_dice(1, 79);
-            let y = rng.roll_dice(1, 49);
-            map.set_terrain(x, y, TerrainType::Water);
+        for _ in 0..800 {
+            let x = rng.roll_dice(1, 78);
+            let y = rng.roll_dice(1, 48);
+            if rng.roll_dice(1, 3) == 1 {
+                map.set_terrain(Point { x, y }, TerrainType::Water);
+            } else {
+                map.set_terrain(Point { x, y }, TerrainType::Mountain);
+            }
         }
 
         map
     }
 }
 
-/// Draw the map to the screen
-pub fn draw_map(mut bl: ResMut<BevyBracket>, map: Res<Map>) {
-    let mut y = 0;
-    let mut x = 0;
-    for terrain in map.terrain.iter() {
-        // Render a tile depending upon the tile type
-        match terrain {
-            TerrainType::Land => {
-                bl.bterm.set(
-                    x,
-                    y,
-                    RGB::named(terminal::GRAY),
-                    RGB::named(terminal::BLACK),
-                    to_cp437('.'),
-                );
-            }
-            TerrainType::Water => {
-                bl.bterm.set(
-                    x,
-                    y,
-                    RGB::named(terminal::BLUE),
-                    RGB::named(terminal::BLUE),
-                    to_cp437('~'),
-                );
-            }
-        }
+/// Draw the visible part of the map to the screen
+pub fn draw_map(
+    mut bl: ResMut<BevyBracket>,
+    map: Res<Map>,
+    viewshed: Query<&Viewshed, With<Cursor>>,
+) {
+    for v in &viewshed {
+        for p in &v.visible_tiles {
+            let terrain = map.get_terrain(*p);
 
-        // Move the coordinates
-        x += 1;
-        if x > 79 {
-            x = 0;
-            y += 1;
+            // for terrain in map.terrain.iter() {
+            // Render a tile depending upon the tile type
+            match terrain {
+                TerrainType::Land => {
+                    bl.bterm.set(
+                        p.x,
+                        p.y,
+                        RGB::named(terminal::GRAY),
+                        RGB::named(terminal::BLACK),
+                        to_cp437('.'),
+                    );
+                }
+                TerrainType::Water => {
+                    bl.bterm.set(
+                        p.x,
+                        p.y,
+                        RGB::named(terminal::BLUE),
+                        RGB::named(terminal::BLUE),
+                        to_cp437('~'),
+                    );
+                }
+                TerrainType::Mountain => {
+                    bl.bterm.set(
+                        p.x,
+                        p.y,
+                        RGB::named(terminal::BLACK),
+                        RGB::named(terminal::BROWN1),
+                        to_cp437('M'),
+                    );
+                }
+            }
         }
     }
 }

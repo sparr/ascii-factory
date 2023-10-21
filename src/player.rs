@@ -4,10 +4,18 @@ use bracket_lib::terminal;
 
 use crate::bevy_bracket::BevyBracket;
 use crate::components::{Cursor, Position};
+use crate::visibility::Viewshed;
 
 /// Create the Player entity with other necessary components
 pub fn add_cursor(mut commands: Commands) {
-    commands.spawn((Cursor, Position { x: 40, y: 30 }));
+    commands.spawn((
+        Cursor,
+        Position { x: 40, y: 30 },
+        Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        },
+    ));
 }
 
 pub fn draw_cursor(
