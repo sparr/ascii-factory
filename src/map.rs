@@ -2,8 +2,6 @@ use bevy::prelude::*;
 use bracket_lib::prelude::*;
 use bracket_lib::terminal::{self, Point};
 
-use crate::components::Cursor;
-use crate::visibility::Viewshed;
 use crate::BevyBracket;
 
 /// Types of terrain that can exist on the game world map
@@ -23,6 +21,7 @@ pub struct Map {
     pub terrain: Vec<TerrainType>,
     pub width: i32,
     pub height: i32,
+    pub terrain_revealed: Vec<bool>,
 }
 
 impl Algorithm2D for Map {
@@ -43,17 +42,13 @@ impl Map {
         self.terrain[idx] = t;
     }
 
-    pub fn get_terrain(&self, p: Point) -> TerrainType {
-        let idx = self.point2d_to_index(p);
-        self.terrain[idx]
-    }
-
     /// Create a map, mostly land with scattered water
     pub fn new_map() -> Map {
         let mut map = Map {
             terrain: vec![TerrainType::Land; 80 * 50],
             width: 80,
             height: 50,
+            terrain_revealed: vec![false; 80 * 50],
         };
 
         // Make the boundaries mountain
@@ -97,16 +92,10 @@ impl Map {
 }
 
 /// Draw the visible part of the map to the screen
-pub fn draw_map(
-    mut bl: ResMut<BevyBracket>,
-    map: Res<Map>,
-    viewshed: Query<&Viewshed, With<Cursor>>,
-) {
-    for v in &viewshed {
-        for p in &v.visible_tiles {
-            let terrain = map.get_terrain(*p);
-
-            // for terrain in map.terrain.iter() {
+pub fn draw_map(mut bl: ResMut<BevyBracket>, map: Res<Map>) {
+    for (idx, terrain) in map.terrain.iter().enumerate() {
+        if map.terrain_revealed[idx] {
+            let p = map.index_to_point2d(idx);
             // Render a tile depending upon the tile type
             match terrain {
                 TerrainType::Land => {
