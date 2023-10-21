@@ -14,6 +14,8 @@ pub fn add_cursor(mut commands: Commands) {
         Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
+            dirty: true,
+            recalced: false,
         },
     ));
 }
@@ -32,7 +34,10 @@ pub fn draw_cursor(
 }
 
 /// Handle input
-pub fn handle_input(mut bl: ResMut<BevyBracket>, mut query: Query<&mut Position, With<Cursor>>) {
+pub fn handle_input(
+    mut bl: ResMut<BevyBracket>,
+    mut query: Query<(&mut Position, Option<&mut Viewshed>), With<Cursor>>,
+) {
     // Cursor movement
     let mut dx = 0;
     let mut dy = 0;
@@ -72,9 +77,15 @@ pub fn handle_input(mut bl: ResMut<BevyBracket>, mut query: Query<&mut Position,
         },
     }
 
-    for mut p in query.iter_mut() {
-        p.x += dx;
-        p.y += dy;
+    if dx != 0 || dy != 0 {
+        for (mut p, v) in query.iter_mut() {
+            p.x += dx;
+            p.y += dy;
+            if let Some(mut v) = v {
+                // this entity has a viewshed that needs to be recalculated
+                v.dirty = true;
+            }
+        }
     }
 }
 

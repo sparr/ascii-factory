@@ -16,7 +16,7 @@ mod render;
 use render::{cls, draw_things};
 
 mod visibility;
-use visibility::{reveal_map, update_visibility};
+use visibility::{reveal_map, update_viewsheds};
 
 /// Used by bevy App.set_runner().run() to allow bracket-lib to control the game loop
 fn bracketlib_runner(mut app: App) {
@@ -47,7 +47,7 @@ pub fn run() {
                 handle_input.before(wrap_position),
                 wrap_position,
                 cls.before(draw_map),
-                update_visibility.before(reveal_map),
+                update_viewsheds.before(reveal_map),
                 reveal_map.before(draw_map),
                 draw_map.before(draw_things),
                 draw_things.before(draw_cursor),

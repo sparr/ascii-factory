@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bracket_lib::prelude::*;
 use bracket_lib::terminal::{self, Point};
 
+use crate::components::Renderable;
 use crate::BevyBracket;
 
 /// Types of terrain that can exist on the game world map
@@ -21,7 +22,8 @@ pub struct Map {
     pub terrain: Vec<TerrainType>,
     pub width: i32,
     pub height: i32,
-    pub terrain_revealed: Vec<bool>,
+    pub terrain_known: Vec<bool>,
+    pub terrain_visible: Vec<bool>,
 }
 
 impl Algorithm2D for Map {
@@ -48,7 +50,8 @@ impl Map {
             terrain: vec![TerrainType::Land; 80 * 50],
             width: 80,
             height: 50,
-            terrain_revealed: vec![false; 80 * 50],
+            terrain_known: vec![false; 80 * 50],
+            terrain_visible: vec![false; 80 * 50],
         };
 
         // Make the boundaries mountain
@@ -94,38 +97,32 @@ impl Map {
 /// Draw the visible part of the map to the screen
 pub fn draw_map(mut bl: ResMut<BevyBracket>, map: Res<Map>) {
     for (idx, terrain) in map.terrain.iter().enumerate() {
-        if map.terrain_revealed[idx] {
+        if map.terrain_known[idx] {
             let p = map.index_to_point2d(idx);
             // Render a tile depending upon the tile type
+            let mut r: Renderable = Default::default();
             match terrain {
                 TerrainType::Land => {
-                    bl.bterm.set(
-                        p.x,
-                        p.y,
-                        RGB::named(terminal::GRAY),
-                        RGB::named(terminal::BLACK),
-                        to_cp437('.'),
-                    );
+                    r.fg = RGB::named(terminal::DARKGREEN);
+                    r.bg = RGB::named(terminal::BLACK);
+                    r.glyph = to_cp437('.');
                 }
                 TerrainType::Water => {
-                    bl.bterm.set(
-                        p.x,
-                        p.y,
-                        RGB::named(terminal::BLUE),
-                        RGB::named(terminal::BLUE),
-                        to_cp437('~'),
-                    );
+                    r.fg = RGB::named(terminal::BLUE);
+                    r.bg = RGB::named(terminal::BLUE);
+                    r.glyph = to_cp437('~');
                 }
                 TerrainType::Mountain => {
-                    bl.bterm.set(
-                        p.x,
-                        p.y,
-                        RGB::named(terminal::BLACK),
-                        RGB::named(terminal::BROWN1),
-                        to_cp437('M'),
-                    );
+                    r.fg = RGB::named(terminal::BLACK);
+                    r.bg = RGB::named(terminal::SADDLEBROWN);
+                    r.glyph = to_cp437('M');
                 }
             }
+            if !map.terrain_visible[idx] {
+                r.fg = r.fg.to_greyscale();
+                r.bg = r.bg.to_greyscale();
+            }
+            bl.bterm.set(p.x, p.y, r.fg, r.bg, r.glyph);
         }
     }
 }

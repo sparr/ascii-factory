@@ -18,7 +18,7 @@ pub struct Position {
 pub struct LeftMover;
 
 /// Necessary info to draw an entity to the screen
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Renderable {
     pub glyph: FontCharType,
     pub fg: RGB,
